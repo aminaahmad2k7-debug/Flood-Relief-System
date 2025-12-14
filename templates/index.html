@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Flood Relief System - Manage and analyze flood relief data">
+    <title>Dashboard - Flood Relief System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bundle.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<!-- Header -->
+<header class="header">
+    <div class="header__container container">
+        <a href="{{ url_for('index') }}" class="header__logo">
+            <span>🌊</span>
+            <span>Flood Relief System</span>
+        </a>
+
+        <nav class="nav">
+            <ul class="nav__list" id="navList">
+                <li class="nav__item">
+                    <a href="{{ url_for('upload_page') }}" class="nav__link">Upload Data</a>
+                </li>
+                <li class="nav__item">
+                    <a href="{{ url_for('index') }}" class="nav__link nav__link--active">
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav__item">
+                    <a href="{{ url_for('districts') }}" class="nav__link">
+                        Districts
+                    </a>
+                </li>
+            </ul>
+
+            <button class="nav__toggle" id="navToggle" aria-label="Toggle navigation">
+                <span class="nav__toggle-icon"></span>
+            </button>
+        </nav>
+    </div>
+</header>
+
+<!-- Main -->
+<main class="main">
+<div class="container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">Flood Relief Dashboard</h1>
+        <p class="page-subtitle">Overview of flood impact and relief required</p>
+    </div>
+
+    <!-- Summary -->
+    <section class="section">
+        <div class="grid grid--4">
+            <div class="metric">
+                <p class="metric__label">Population Affected</p>
+                <h3 class="metric__value">{{ "{:,}".format(summary.population) }}</h3>
+            </div>
+
+            <div class="metric">
+                <p class="metric__label">Houses Damaged</p>
+                <h3 class="metric__value">{{ "{:,}".format(summary.houses) }}</h3>
+            </div>
+
+            <div class="metric">
+                <p class="metric__label">Casualties</p>
+                <h3 class="metric__value">{{ summary.casualties }}</h3>
+            </div>
+
+            <div class="metric">
+                <p class="metric__label">Relief Required</p>
+                <h3 class="metric__value">
+                    PKR {{ "{:,}".format(summary.relief) }}
+                </h3>
+            </div>
+        </div>
+    </section>
+
+    <!-- District Table -->
+    <section class="section">
+        <div class="card">
+            <div class="card__header">
+                <h2 class="card__title">District Overview</h2>
+            </div>
+            <div class="table-wrapper">
+                <table class="table table--striped">
+                    <thead>
+                        <tr>
+                            <th>District</th>
+                            <th>Population</th>
+                            <th>Houses</th>
+                            <th>Casualties</th>
+                            <th>Relief Required</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in districts %}
+                        <tr>
+                            <td><strong>{{ d.name }}</strong></td>
+                            <td>{{ "{:,}".format(d.population) }}</td>
+                            <td>{{ "{:,}".format(d.houses) }}</td>
+                            <td>{{ d.casualties }}</td>
+                            <td>PKR {{ "{:,}".format(d.relief) }}</td>
+                            <td>
+                                <a href="{{ url_for('district_detail', district_id=d.id) }}"
+                                   class="btn btn--sm btn--outline">
+                                   View
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" style="text-align:center;">No data available</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Charts -->
+    <section class="section">
+        <div class="grid grid--2">
+            <div class="card">
+                <div class="card__header">
+                    <h3 class="card__title">Population Affected by District</h3>
+                </div>
+                <div class="card__body">
+                    <div style="height: 300px; position: relative;">
+                        <canvas id="populationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card__header">
+                    <h3 class="card__title">Relief Requirement</h3>
+                </div>
+                <div class="card__body">
+                    <div style="height: 300px; position: relative;">
+                        <canvas id="reliefChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</div>
+</main>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="footer__container container">
+        <p>© 2025 Flood Relief System</p>
+    </div>
+</footer>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+<script>
+    // Get districts data from Flask
+    const districts = {{ districts | tojson }};
+    
+    // Generate colors for all districts
+    function generateColors(count) {
+        const colors = [
+            'rgba(239, 68, 68, 0.7)',    // Red
+            'rgba(34, 197, 94, 0.7)',    // Green
+            'rgba(251, 191, 36, 0.7)',   // Yellow
+            'rgba(168, 85, 247, 0.7)',   // Purple
+            'rgba(59, 130, 246, 0.7)',   // Blue
+            'rgba(236, 72, 153, 0.7)',   // Pink
+            'rgba(20, 184, 166, 0.7)',   // Teal
+            'rgba(249, 115, 22, 0.7)',   // Orange
+            'rgba(139, 92, 246, 0.7)',   // Violet
+            'rgba(14, 165, 233, 0.7)',   // Sky
+        ];
+        
+        const result = [];
+        for (let i = 0; i < count; i++) {
+            result.push(colors[i % colors.length]);
+        }
+        return result;
+    }
+    
+    function generateBorderColors(count) {
+        const colors = [
+            'rgba(239, 68, 68, 1)',
+            'rgba(34, 197, 94, 1)',
+            'rgba(251, 191, 36, 1)',
+            'rgba(168, 85, 247, 1)',
+            'rgba(59, 130, 246, 1)',
+            'rgba(236, 72, 153, 1)',
+            'rgba(20, 184, 166, 1)',
+            'rgba(249, 115, 22, 1)',
+            'rgba(139, 92, 246, 1)',
+            'rgba(14, 165, 233, 1)',
+        ];
+        
+        const result = [];
+        for (let i = 0; i < count; i++) {
+            result.push(colors[i % colors.length]);
+        }
+        return result;
+    }
+    
+    // Population Bar Chart - Show ALL districts
+    const popCtx = document.getElementById('populationChart');
+    if (popCtx && districts.length > 0) {
+        new Chart(popCtx, {
+            type: 'bar',
+            data: {
+                labels: districts.map(d => d.name),
+                datasets: [{
+                    label: 'Population Affected',
+                    data: districts.map(d => d.population),
+                    backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Population: ' + context.parsed.y.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString();
+                            }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Relief Pie Chart - Show ALL districts
+    const reliefCtx = document.getElementById('reliefChart');
+    if (reliefCtx && districts.length > 0) {
+        new Chart(reliefCtx, {
+            type: 'pie',
+            data: {
+                labels: districts.map(d => d.name),
+                datasets: [{
+                    label: 'Relief Amount Required',
+                    data: districts.map(d => d.relief),
+                    backgroundColor: generateColors(districts.length),
+                    borderColor: generateBorderColors(districts.length),
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'right',
+                        labels: {
+                            boxWidth: 12,
+                            font: {
+                                size: 11
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return label + ': PKR ' + value.toLocaleString() + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
