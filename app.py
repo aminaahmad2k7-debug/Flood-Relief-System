@@ -10,12 +10,17 @@ app = Flask(__name__)
 app.secret_key = 'dev-secret-key'
 
 # ---------------- CONFIG ----------------
-UPLOAD_FOLDER = 'uploads'
-PROCESSED_FOLDER = 'processing'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
+PROCESSED_FOLDER = os.path.join(BASE_DIR, 'processing')
+
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(PROCESSED_FOLDER, exist_ok=True)
+
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['PROCESSED_FOLDER'] = PROCESSED_FOLDER
+
 
 # ---------------- DATA ----------------
 # Initial sample data
